@@ -82,13 +82,13 @@ public class PatientsController : ControllerBase
             return NotFound($"Bed type '{dto.BedType}' was not found.");
         }
 
-        if (dto.To.HasValue && dto.To.Value <= dto.From)
+        var from = dto.From!.Value;
+        var to = dto.To;
+
+        if (to.HasValue && to.Value <= from)
         {
             return BadRequest("'to' must be later than 'from'.");
         }
-
-        var from = dto.From;
-        var to = dto.To;
 
         var freeBed = await _context.Beds
             .Where(b => b.BedTypeId == bedType.Id && b.Room.WardId == ward.Id)

@@ -5,7 +5,7 @@ namespace PJATK_APBD_Cw5_s32103.Dtos;
 public class CreateBedAssignmentDto
 {
     [Required]
-    public DateTime From { get; set; }
+    public DateTime? From { get; set; }
 
     public DateTime? To { get; set; }
 
