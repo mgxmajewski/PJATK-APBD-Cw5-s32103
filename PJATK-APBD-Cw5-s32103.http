@@ -1,6 +1,88 @@
-@PJATK_APBD_Cw5_s32103_HostAddress = http://localhost:5203
+@host = http://localhost:5203
 
-GET {{PJATK_APBD_Cw5_s32103_HostAddress}}/weatherforecast/
+### Zad2 - GET all patients (nested admissions + bedAssignments)
+GET {{host}}/api/patients
 Accept: application/json
 
-###
+### Zad2 - GET with search filter (expect Kowalski, Nowak, Kaczmarek, Lewandowski)
+GET {{host}}/api/patients?search=an
+Accept: application/json
+
+### Zad3 - POST assign bed (expect 201 - Standard bed in Kardiologia is free for this period)
+POST {{host}}/api/patients/90010112345/bedassignments
+Content-Type: application/json
+
+{
+  "from": "2026-05-20T14:00:00",
+  "to": "2026-05-30T10:00:00",
+  "bedType": "Standard",
+  "ward": "Kardiologia"
+}
+
+### Zad3 - POST no free bed (expect 404 - only IT bed in Chirurgia is occupied open-ended)
+POST {{host}}/api/patients/90010112345/bedassignments
+Content-Type: application/json
+
+{
+  "from": "2026-06-01T09:00:00",
+  "bedType": "Intensywna terapia",
+  "ward": "Chirurgia"
+}
+
+### Zad3 - POST patient not found (expect 404)
+POST {{host}}/api/patients/00000000000/bedassignments
+Content-Type: application/json
+
+{
+  "from": "2026-05-20T14:00:00",
+  "bedType": "Standard",
+  "ward": "Kardiologia"
+}
+
+### Zad3 - POST ward not found (expect 404)
+POST {{host}}/api/patients/90010112345/bedassignments
+Content-Type: application/json
+
+{
+  "from": "2026-05-20T14:00:00",
+  "bedType": "Standard",
+  "ward": "Nieistniejacy"
+}
+
+### Zad3 - POST bed type not found (expect 404)
+POST {{host}}/api/patients/90010112345/bedassignments
+Content-Type: application/json
+
+{
+  "from": "2026-05-20T14:00:00",
+  "bedType": "Nieistniejacy",
+  "ward": "Kardiologia"
+}
+
+### Zad3 - POST missing 'from' (expect 400 - From is [Required])
+POST {{host}}/api/patients/90010112345/bedassignments
+Content-Type: application/json
+
+{
+  "bedType": "Standard",
+  "ward": "Kardiologia"
+}
+
+### Zad3 - POST 'to' not later than 'from' (expect 400)
+POST {{host}}/api/patients/90010112345/bedassignments
+Content-Type: application/json
+
+{
+  "from": "2026-05-30T10:00:00",
+  "to": "2026-05-20T14:00:00",
+  "bedType": "Standard",
+  "ward": "Kardiologia"
+}
+
+### Zad3 - POST missing 'bedType' and 'ward' (expect 400 - both [Required])
+POST {{host}}/api/patients/90010112345/bedassignments
+Content-Type: application/json
+
+{
+  "from": "2026-05-20T14:00:00"
+}
