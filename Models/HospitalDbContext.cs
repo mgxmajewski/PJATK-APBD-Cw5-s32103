@@ -29,14 +29,6 @@ public partial class HospitalDbContext : DbContext
 
     public virtual DbSet<Ward> Wards { get; set; }
 
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    {
-        if (!optionsBuilder.IsConfigured)
-        {
-            optionsBuilder.UseSqlServer("Server=localhost,1433;Database=HospitalDb;User Id=sa;Password=yourStrong(!)Password;TrustServerCertificate=True;");
-        }
-    }
-
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Admission>(entity =>
