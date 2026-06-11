@@ -17,4 +17,8 @@
         <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.17" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="DAL\Configruation\" />
+    </ItemGroup>
+
 </Project>
