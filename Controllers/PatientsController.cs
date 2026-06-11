@@ -60,4 +60,72 @@ public class PatientsController : ControllerBase
 
         return Ok(patients);
     }
+
+    [HttpPost("{pesel}/bedassignments")]
+    public async Task<IActionResult> AssignBed(string pesel, [FromBody] CreateBedAssignmentDto dto)
+    {
+        var patientExists = await _context.Patients.AnyAsync(p => p.Pesel == pesel);
+        if (!patientExists)
+        {
+            return NotFound($"Patient with PESEL '{pesel}' was not found.");
+        }
+
+        var ward = await _context.Wards.FirstOrDefaultAsync(w => w.Name == dto.Ward);
+        if (ward is null)
+        {
+            return NotFound($"Ward '{dto.Ward}' was not found.");
+        }
+
+        var bedType = await _context.BedTypes.FirstOrDefaultAsync(bt => bt.Name == dto.BedType);
+        if (bedType is null)
+        {
+            return NotFound($"Bed type '{dto.BedType}' was not found.");
+        }
+
+        if (dto.To.HasValue && dto.To.Value <= dto.From)
+        {
+            return BadRequest("'to' must be later than 'from'.");
+        }
+
+        var from = dto.From;
+        var to = dto.To;
+
+        var freeBed = await _context.Beds
+            .Where(b => b.BedTypeId == bedType.Id && b.Room.WardId == ward.Id)
+            .Where(b => !b.BedAssignments.Any(ba =>
+                (to == null || ba.From < to) &&
+                (ba.To == null || ba.To > from)))
+            .FirstOrDefaultAsync();
+
+        if (freeBed is null)
+        {
+            return NotFound(
+                $"No free '{dto.BedType}' bed is available in ward '{dto.Ward}' for the requested period.");
+        }
+
+        var assignment = new BedAssignment
+        {
+            PatientPesel = pesel,
+            BedId = freeBed.Id,
+            From = from,
+            To = to
+        };
+
+        _context.BedAssignments.Add(assignment);
+        await _context.SaveChangesAsync();
+
+        var result = new
+        {
+            id = assignment.Id,
+            patientPesel = assignment.PatientPesel,
+            bedId = freeBed.Id,
+            roomId = freeBed.RoomId,
+            bedType = dto.BedType,
+            ward = dto.Ward,
+            from = assignment.From,
+            to = assignment.To
+        };
+
+        return Created($"/api/patients/{pesel}/bedassignments/{assignment.Id}", result);
+    }
 }
